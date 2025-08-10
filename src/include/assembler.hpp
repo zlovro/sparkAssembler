@@ -499,12 +499,25 @@ namespace SPARK::Assembler::Analysis
 
     void expandRawIncludeRecursively(Cpu::SparkAssemblerContext* pCtx, const string& pFileName, SafeList<string>* pOutLines)
     {
-        std::ifstream file(pFileName);
+        std::ifstream file;
+        for (const auto& incPath : pCtx->absoluteIncludePaths)
+        {
+            file.open(filesystem::path(incPath) / pFileName);
+            if (file.is_open())
+            {
+                break;
+            }
+        }
 
-        string line;
-
+        if (!file.is_open())
+        {
+            pCtx->error(format("Could not find file '{}' in include paths.", pFileName));
+            return;
+        }
+        
         pCtx->setCurrentFile(pFileName);
-
+        
+        string line;
         while (std::getline(file, line))
         {
             pCtx->incrementAssemblerLineNumber();
